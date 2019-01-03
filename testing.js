@@ -21,5 +21,3 @@ HS.getMagnets("Boruto", ['720', '480']).then(function(links){
     links.map(function(i){ console.log(i.magnet) });
     // { quality : '720', magnet : 'magnet:?xt=...' }
 });
-
-

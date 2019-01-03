@@ -9,17 +9,15 @@ var Default = {
 };
 
 // Suppress unhandled jsdom error
-var oerror = console.error
+var oerror = console.error;
 console.error = function(msg) {
     if(msg.indexOf('Error: Could not parse CSS stylesheet') > -1) return;
     oerror(msg)
-}
+};
 
 function ErrorHelper(err){
     var message = null;
-
     if(err.indexOf("SSL23_GET_SERVER_HELLO:unknown protocol")) message = "Try again in a few minutes";
-
     return { err : err, message : message };
 }
 
@@ -52,7 +50,7 @@ HorribleSubs.prototype.checkCache = function(target){
     if( sBetween(store.last) >= ~~(this.cacheint / 1000) ){
         return null;
     } else return store.store;
-}
+};
 
 HorribleSubs.prototype.validateConfig = function(config){
     config = Object.assign(Default, config || {});
@@ -92,7 +90,7 @@ HorribleSubs.prototype.getAllShows = function(){
                 if(!self.use_id) delete o.id;
 
                 shows.push(o);
-            })
+            });
 
             self.cache[target].store = shows;
             resolve(shows);
@@ -118,7 +116,7 @@ HorribleSubs.prototype.findShow = function(show, exact){
             reject(ErrorHelper(err));
         })
     })
-}
+};
 
 HorribleSubs.prototype._collectGetshows = function(showid){
     var self    = this;
@@ -163,7 +161,7 @@ HorribleSubs.prototype._magFilter = function(magnets, quality){
         collected.push(match);
     });
     return collected;
-}
+};
 
 // Recommended ['720', '480']
 HorribleSubs.prototype.getMagnets = function(show, quality){
@@ -183,7 +181,7 @@ HorribleSubs.prototype.getMagnets = function(show, quality){
             reject(ErrorHelper(err));
         });
     });
-}
+};
 
 HorribleSubs.prototype._getShowID = function(location){
     var self    = this;
@@ -198,7 +196,7 @@ HorribleSubs.prototype._getShowID = function(location){
             resolve(match);
         })
     })
-}
+};
 
 HorribleSubs.prototype.call = function(loc){
     var self = this;

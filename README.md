@@ -67,3 +67,20 @@ magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:
 ...
 */
 ```
+
+Config
+---------------------
+
+```javascript
+var HS = new HorribleSubs({
+    // Change the host (if .info is taken down)
+    host : "https://horriblesubs.info",
+    // Generate unique ids for each show when using getAllShows()
+    use_id : false
+});
+```
+
+Additional notes
+---------------------
+
+getAllShows() will cache the results for 60 seconds to avoid making a ton of requests every time a show is retreived.
