@@ -1,0 +1,28 @@
+{
+  "name": "horriblesubs",
+  "version": "0.0.3",
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "jsdom": "^13.1.0",
+    "shorthash": "0.0.2"
+  },
+  "author": {
+    "name": "Kain",
+    "url": "http://ksir.pw"
+  },
+  "bugs": {
+    "url": "https://github.com/DrKain/npm-horriblesubs/issues"
+  },
+  "description": "A horriblesubs package to search and retreive magnet links for shows",
+  "homepage": "https://github.com/DrKain/npm-horriblesubs",
+  "keywords": ["horriblesubs","api","scrape","package","npm","nodejs","hs","magnet","torrent"],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DrKain/npm-horriblesubs.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
