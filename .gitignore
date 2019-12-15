@@ -1,0 +1,9 @@
+# Personals tests
+test/
+
+# Projects dirs
+node_modules/
+.idea/
+
+# Old files
+old.js
