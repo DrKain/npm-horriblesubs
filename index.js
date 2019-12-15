@@ -47,7 +47,7 @@ const getAllShows = function(refetch = false){
 
     // Return from cache if we already have them loaded
     if(Object.keys(config.cache.shows).length !== 0 && refetch === false){
-        return config.cache.shows;
+        return new Promise(resolve => resolve(config.cache.shows));
     }
 
     // Attempt to load all shows
