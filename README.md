@@ -5,82 +5,46 @@ horriblesubs
 
 **What is this?***
 ------------------
-horriblesubs is a NodeJS package for searching and retreiving magnet links from horriblesubs in the desired quality.
-This is a very early build and may be subject to change in the future.
-Pull requests are welcome.
+This is a package to easily fetch multiple magnet links from horriblesubs.
+*v0.0.5 does not have getMagnets, only getBatches. I know this isn't ideal but I'm sure the 5 people using my package won't care too much.*
 
 Install
 ---------------------
 
 ```npm install --save horriblesubs```
 
-findShow
+Example
 ---------------------
 
 ```javascript
-var HorribleSubs  = require("./index");
-var HS = new HorribleSubs();
+const HS = require('horriblesubs');
 
-HS.findShow("Tokyo Ghoul").then(console.log);
+/***
+ * This is the full example of how you'd want to get magnet links for a show
+ * when you don't know the URL ID or numeric ID
+ */
 
-/*
-[
-  {
-    "id": "4b6AC",
-    "location": "/shows/tokyo-ghoul",
-    "title": "Tokyo Ghoul"
-  },
-  {
-    "id": "Z1O2u1A",
-    "location": "/shows/tokyo-ghoul-re",
-    "title": "Tokyo Ghoul re"
-  },
-  {
-    "id": "1sIIcH",
-    "location": "/shows/tokyo-ghoul-root-a",
-    "title": "Tokyo Ghoul Root A"
-  }
-]
-*/
-```
+// Debugging to help you see what's happening
+HS.set({ debug: true });
 
-getMagnets
----------------------
-
-`quality` is expected to be an array. If you use `[1080, 720, 480]` the function will return 1080p magnets and fallback to 720p if no 1080p magnet is found.
-
-```javascript
-var HorribleSubs  = require("./index");
-var HS = new HorribleSubs();
-
-HS.getMagnets("Boruto", ['720', '480']).then(function(links){
-    links.map(function(item){ console.log(item.magnet) });
-});
-
-/*
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-magnet:?xt=urn:btih:00000000000000000000000000000000&tr=http://nyaa.tracker.foo:7777
-...
-*/
-```
-
-Config
----------------------
-
-```javascript
-var HS = new HorribleSubs({
-    // Change the host (if .info is taken down)
-    host : "https://horriblesubs.info",
-    // Generate unique ids for each show when using getAllShows()
-    use_id : false
+// Search all shows and match the title
+HS.search('Fairy Tail').then(function(shows){
+    if(shows === null || shows.length === 0) return console.error("No matches");
+    // Pick the first show in the results
+    const first = shows.shift();
+    // Get information about the show
+    HS.getShow(first.id).then(function(show){
+        // Now that you have the numeric ID you can get the magnets links...
+        HS.getBatches(show.id).then(function(links){
+            console.log(JSON.stringify(links, null, 2));
+        })
+    })
 });
 ```
+
 
 Additional notes
 ---------------------
 
-getAllShows() will cache the results for 60 seconds to avoid making a ton of requests every time a show is retreived.
+The total list of all shows is cached to prevent unnecessary extra requests.
+I recommend saving the numeric show ID to further lower the number of requests made from 2-3 to 1
