@@ -1,210 +1,149 @@
-var jsdom       = require('jsdom');
-var sh          = require("shorthash");
+const jsdom = require('jsdom');
 
-var Default = {
-    use_id      : true,
-    id_method   : sh.unique,
-    cacheint    : 60000, // 60 seconds between each cache update
-    host        : "https://horriblesubs.info"
+const config = {
+    debug: false,
+    cache : { shows: [] },
+    host : 'https://horriblesubs.info'
 };
 
-// Suppress unhandled jsdom error
-var oerror = console.error;
-console.error = function(msg) {
-    if(msg.indexOf('Error: Could not parse CSS stylesheet') > -1) return;
-    oerror(msg)
+// Suppress CSS parse error
+const oerror = console.error;
+console.error = function(m){
+    if(m.indexOf('Error: Could not parse CSS stylesheet') > -1) return;
+    oerror(m)
 };
 
-function ErrorHelper(err){
-    var message = null;
-    if(err.indexOf("SSL23_GET_SERVER_HELLO:unknown protocol")) message = "Try again in a few minutes";
-    return { err : err, message : message };
-}
+const set = function(options = {}){
+    Object.assign(config, options);
+};
 
-var HorribleSubs = function(config){
-    this.validateConfig(config);
-    this.cache = {
-        '/shows/' : {
-            store   : null,
-            last    : new Date()
+// Make request
+const call = function (path) {
+    if(config.debug) console.log(`Sending request to ${config.host + path}`);
+    return new Promise(((resolve, reject) => {
+        jsdom.JSDOM.fromURL(config.host + path)
+            .then(dom => resolve(dom.window), reject);
+    }))
+};
+
+const getAllShows = function(refetch = false){
+    this.route = '/shows/';
+    this.description = 'Get all shows available on the site.';
+
+    const handler = function(window){
+        const shows = [];
+
+        window.document.querySelectorAll('.ind-show a').forEach(($show) => {
+            const title = $show.getAttribute('title') || $show.textContent;
+            const location = $show.getAttribute('href');
+            const id = location.split('/shows/').pop();
+            shows.push({ id, title, location });
+        });
+
+        // Update the cache with the shows
+        config.cache.shows = shows;
+        return shows;
+    };
+
+    // Return from cache if we already have them loaded
+    if(Object.keys(config.cache.shows).length !== 0 && refetch === false){
+        return config.cache.shows;
+    }
+
+    // Attempt to load all shows
+    return call(this.route).then(handler);
+};
+
+const getShow = async function(name) {
+    this.route = `/shows/${name}`;
+    this.description = 'Get information and magnet links for a specific show.';
+
+    const handler = function(window){
+        const d = window.document;
+
+        // First get the show ID
+        let id = null;
+        d.querySelectorAll('script').forEach($script => {
+            if($script.innerHTML.indexOf('var hs_showid =') > -1){
+                id = +$script.innerHTML.split('=').pop().split(';').shift();
+            }
+        });
+
+        if(config.debug) console.log(`Found show ID: ${id}`);
+
+        return {
+            id,
+            title: d.querySelector('.entry-title').textContent,
+            description: d.querySelector('.series-desc p').textContent,
+            location: window.location.href,
+            poster: `${config.host}${d.querySelector('.series-image img').getAttribute('src')}`
         }
     };
-};
 
-HorribleSubs.prototype.checkCache = function(target){
-    // Create cache entry if not exist
-    if(!this.cache[target]){
-        this.cache[target] = {
-            store   : null,
-            last    : new Date()
-        };
-    }
-    // Function for seconds since last store
-    function sBetween(start){
-        return (new Date().getTime() - start.getTime()) / 1000;
-    }
+    const shows = await getAllShows();
+    const match = shows.filter(show => show.location === this.route);
 
-    var store = this.cache[target];
-
-    // If we can update return null, otherwise return the storage
-    if( sBetween(store.last) >= ~~(this.cacheint / 1000) ){
+    if(match.length !== 1) {
+        if(config.debug) console.log(`Unable to match ${this.route}`);
         return null;
-    } else return store.store;
+    }
+
+    return call(this.route).then(handler);
 };
 
-HorribleSubs.prototype.validateConfig = function(config){
-    config = Object.assign(Default, config || {});
+const search = async function(query){
+    this.description = 'Search for a specific show.';
 
-    // Validate Host
-    var proto   = config.host.split("://").shift() === "https" ? "https://" : "http://";
-    this.host   = proto  + config.host.split("://").pop().split("/").shift();
+    query = query.toLowerCase();
+    const shows = await getAllShows();
 
-    // Generate ids for each show
-    this.use_id         = config.use_id;
-    this.id_method      = config.id_method;
+    if(config.debug) console.log(`Searching for shows matching ${query}`);
 
-    // Cache interval
-    this.cacheint       = config.cacheint;
+    const hits = shows.filter($show => {
+        // The laziest way of searching!
+        return $show.title.toLowerCase().indexOf(query) > -1
+    });
+
+    if(config.debug) console.log(`Found ${hits.length} matches`);
+
+    return hits;
 };
 
-HorribleSubs.prototype.getAllShows = function(){
-    var self    = this;
-    var target  = "/shows/";
-    var store   = self.checkCache(target);
+const getBatches = async function(show_id){
+    this.query = `/api.php?method=getshows&type=batch&showid=${show_id}`;
+    this.description = 'Fetch batches for a specific show using the numeric show ID.';
 
-    return new Promise(function(resolve, reject){
-        if(store !== null){
-            return resolve(store);
-        }
-        self.call(target).then(function($){
-            var shows = [];
+    if(isNaN(show_id)){
+        console.error(`getBatches() requires numeric ID. Use getShow() to fetch the ID.`);
+        return null;
+    }
 
-            $(".ind-show a").each(function(i, v){
+    const handler = function(window){
+        if(window.document.querySelector('body').innerHTML === 'There are no batches for this show yet')
+            return window.document.querySelector('body').innerHTML;
 
-                var o = {
-                    id          : self.id_method( $(v).attr('title') || $(v).text() ),
-                    location    : $(v).attr('href'),
-                    title       : $(v).attr('title') || $(v).text()
-                };
+        const batches = [];
 
-                if(!self.use_id) delete o.id;
+        window.document.querySelectorAll('a[title="Magnet Link"]').forEach(function(link){
+            const id = link.parentElement.parentElement.getAttribute('id');
+            const _split = id.split('-');
+            const quality = _split.splice(-1,1);
 
-                shows.push(o);
+            batches.push({
+                quality: quality.shift(),
+                episodes: _split.join('-'),
+                magnet: link.getAttribute('href')
             });
-
-            self.cache[target].store = shows;
-            resolve(shows);
-
-        }, function(err){
-            reject(ErrorHelper(err));
         });
-    })
+
+        return batches
+    };
+
+    return call(this.query).then(handler);
 };
 
-HorribleSubs.prototype.findShow = function(show, exact){
-    if(typeof exact === 'undefined') exact = false;
-    show = show.toLowerCase();
-    var self = this;
-    return new Promise(function(resolve, reject){
-        self.getAllShows().then(function(shows){
-            resolve(shows.filter(function(listing){
-                return (
-                    exact === true ? ( listing.title.toLowerCase() === show ) : ( listing.title.toLowerCase().indexOf(show) > -1 )
-                )
-            }));
-        }, function(err){
-            reject(ErrorHelper(err));
-        })
-    })
+module.exports = {
+    set,
+    getAllShows, getShow, search,
+    getBatches
 };
-
-HorribleSubs.prototype._collectGetshows = function(showid){
-    var self    = this;
-    var links   = {};
-    var index   = 0;
-
-   return new Promise(function(resolve, reject){
-       function loadPage(){
-           self.call("/api.php?method=getshows&type=show&showid=" + showid + "&nextid=" + index).then(function($){
-               if($("body").html() === "DONE") return resolve(links);
-               $(".rls-info-container").each(function(i, v){
-                   var episode = +$(v).find(".rls-label strong").text();
-
-                   links[showid + "_" + episode] = {
-                       episode : episode,
-                       480     : $(v).find('.link-480p a[title="Magnet Link"]').attr('href'),
-                       720     : $(v).find('.link-720p a[title="Magnet Link"]').attr('href'),
-                       1080    : $(v).find('.link-1080p a[title="Magnet Link"]').attr('href')
-                   }
-               });
-               loadPage(index++);
-           })
-       }
-       loadPage();
-   })
-
-};
-
-HorribleSubs.prototype._magFilter = function(magnets, quality){
-    var collected = [];
-    Object.keys(magnets).filter(function(item){
-        var epi = magnets[item];
-        var match = null;
-        for(var i = 0; i < quality.length; i++){
-            if(!match){
-                if(typeof epi[quality[i]] !== 'undefined') match = {
-                    quality : quality[i],
-                    magnet  : epi[quality[i]]
-                };
-            }
-        }
-        collected.push(match);
-    });
-    return collected;
-};
-
-// Recommended ['720', '480']
-HorribleSubs.prototype.getMagnets = function(show, quality){
-    if(typeof quality === 'string') quality = [quality];
-    var self = this;
-
-    return new Promise(function(resolve, reject){
-        self.findShow(show).then(function(result){
-            if(result.length === 0) return reject("No Results");
-            if(result.length > 1) result = [result.shift()];
-            self._getShowID(result[0].location).then(function(SID){
-                self._collectGetshows(SID).then(function(links){
-                    resolve(self._magFilter(links, quality));
-                });
-            })
-        }, function(err){
-            reject(ErrorHelper(err));
-        });
-    });
-};
-
-HorribleSubs.prototype._getShowID = function(location){
-    var self    = this;
-    var regex   = /var hs_showid = (.*);/;
-    return new Promise(function(resolve, reject){
-        self.call("/show/" + location).then(function($){
-            var match = -1;
-            $("script").each(function(i, v){
-                var r = +(regex.exec($(v).html()) || [,'-1'])[1];
-                if(r > -1) match = r;
-            });
-            resolve(match);
-        })
-    })
-};
-
-HorribleSubs.prototype.call = function(loc){
-    var self = this;
-    return new Promise(function(resolve, reject){
-        jsdom.JSDOM.fromURL(self.host + loc).then(function(dom){
-            resolve(require('jquery')(dom.window));
-        }, reject);
-    });
-};
-
-module.exports = HorribleSubs;
