@@ -5,8 +5,7 @@ horriblesubs
 
 **What is this?***
 ------------------
-This is a package to easily fetch multiple magnet links from horriblesubs.
-*v0.0.5 does not have getMagnets, only getBatches. I know this isn't ideal but I'm sure the 5 people using my package won't care too much.*
+This is a package to easily fetch multiple magnet links from horriblesubs. This saves you the trouble of clicking each episode one by one on the HS website.
 
 Install
 ---------------------
