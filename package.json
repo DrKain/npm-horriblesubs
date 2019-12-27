@@ -1,8 +1,8 @@
 {
   "name": "horriblesubs",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "dependencies": {
-    "jquery": "^3.4.1"
+    "jsdom": "^15.2.1"
   },
   "author": {
     "name": "Kain",

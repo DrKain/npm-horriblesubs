@@ -2,6 +2,7 @@ const jsdom = require('jsdom');
 
 const config = {
     debug: false,
+    interval: 500,
     cache : { shows: [] },
     host : 'https://horriblesubs.info'
 };
@@ -109,6 +110,61 @@ const search = async function(query){
     return hits;
 };
 
+const loadPage = function(show_id, index, links){
+    this.query = `/api.php?method=getshows&type=show&showid=${show_id}&nextid=${index}`;
+    this.description = 'Used by getMagnets() to collect magnet links over multiple pages.';
+
+    const handler = async function(window) {
+        const d = window.document;
+        let done = false;
+
+        if(d.querySelector('body').textContent === 'DONE') done = true;
+
+        d.querySelectorAll('.rls-info-container').forEach(v => {
+            const episode = v.querySelector('.rls-label strong').textContent;
+
+            const q_480 = v.querySelector('.link-480p a[title="Magnet Link"]');
+            const q_720 = v.querySelector('.link-720p a[title="Magnet Link"]');
+            const q_1080 = v.querySelector('.link-1080p a[title="Magnet Link"]');
+
+            links[`${show_id}_${episode}`] = {
+                episode,
+                480: q_480 ? q_480.getAttribute('href') : null,
+                720: q_720 ? q_720.getAttribute('href') : null,
+                1080: q_1080 ? q_1080.getAttribute('href') : null,
+            }
+        });
+
+        return [links, done];
+    };
+
+    return call(this.query).then(handler);
+};
+
+async function pause(interval) {
+    return new Promise(resolve => setTimeout(resolve, interval));
+}
+
+const getMagnets = async function(show_id){
+    this.query = null;
+    this.description = 'Fetch all magnets available for a certain show.';
+
+    return new Promise(async resolve => {
+        let links = {};
+        let done = false;
+        let index = 0;
+
+        while(done === false){
+            // Throttle the page loads to prevent hammering the API
+            await pause(config.interval);
+            // Load page and update links
+            [links, done] = await loadPage(show_id, index++, links);
+        }
+
+        return resolve(links);
+    })
+};
+
 const getBatches = async function(show_id){
     this.query = `/api.php?method=getshows&type=batch&showid=${show_id}`;
     this.description = 'Fetch batches for a specific show using the numeric show ID.';
@@ -145,5 +201,5 @@ const getBatches = async function(show_id){
 module.exports = {
     set,
     getAllShows, getShow, search,
-    getBatches
+    getBatches, getMagnets
 };

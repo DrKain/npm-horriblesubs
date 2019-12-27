@@ -20,6 +20,48 @@ Example
 const HS = require('horriblesubs');
 
 /***
+ * Fetch ALL available magnet links for a show. Any quality.
+ * The great thing about this is it will allow you to copy-paste the magnet links into your download
+ * client instead of clicking each link one by one.
+ */
+
+// Debugging to help you see what's happening
+HS.set({ debug: true });
+
+// How many milliseconds to wait between page loads
+HS.set({ interval: 1000 });
+
+// 1273 - Show ID for Dr. Stone (Currently 24 episodes)
+HS.getMagnets(1273).then(links => {
+
+    Object.keys(links).forEach(item => {
+        const link = links[item];
+        console.log(
+            // Log 1080p magnet. If not available fallback to 720, then 480
+            link['1080'] || link['720'] || link['480']
+        )
+    })
+
+});
+
+/*
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+magnet:?xt=urn:btih:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&tr=http://nyaa.tracker.wf:7777/announce...
+... ect
+*/
+```
+
+#### More Examples:
+
+```javascript
+const HS = require('horriblesubs');
+
+/***
  * This is the full example of how you'd want to get magnet links for a show
  * when you don't know the URL ID or numeric ID
  */
