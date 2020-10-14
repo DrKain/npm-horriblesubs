@@ -1,36 +1,34 @@
 {
-  "name": "horriblesubs",
-  "version": "0.1.0",
-  "dependencies": {
-    "jsdom": "^15.2.1"
-  },
-  "author": {
-    "name": "Kain",
-    "url": "http://ksir.pw"
-  },
-  "bugs": {
-    "url": "https://github.com/DrKain/npm-horriblesubs/issues"
-  },
-  "description": "A horriblesubs package to search and retreive magnet links for shows",
-  "homepage": "https://github.com/DrKain/npm-horriblesubs",
-  "keywords": [
-    "horriblesubs",
-    "api",
-    "scrape",
-    "package",
-    "npm",
-    "nodejs",
-    "hs",
-    "magnet",
-    "torrent"
-  ],
-  "license": "MIT",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DrKain/npm-horriblesubs.git"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+    "name": "horriblesubs",
+    "version": "1.0.0",
+    "dependencies": {},
+    "author": {
+        "name": "Kain",
+        "url": "http://ksir.pw"
+    },
+    "bugs": {
+        "url": "https://github.com/DrKain/npm-horriblesubs/issues"
+    },
+    "description": "A horriblesubs package to search and retrieve magnet links for anime. Useful for bulk downloading",
+    "homepage": "https://github.com/DrKain/npm-horriblesubs",
+    "keywords": [
+        "horriblesubs",
+        "api",
+        "scrape",
+        "package",
+        "npm",
+        "nodejs",
+        "hs",
+        "magnet",
+        "torrent"
+    ],
+    "license": "MIT",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/DrKain/npm-horriblesubs.git"
+    },
+    "scripts": {
+        "test": "node index.js"
+    }
 }
